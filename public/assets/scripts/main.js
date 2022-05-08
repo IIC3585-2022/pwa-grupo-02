@@ -1,5 +1,3 @@
-import './style.css'
-
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
     .register('/serviceWorker.js')
