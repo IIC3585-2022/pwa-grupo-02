@@ -2,6 +2,6 @@ import './style.css'
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
-    .register('/sw.js')
+    .register('/serviceWorker.js')
     .then(() => console.log('Service worker registered!'));
 }
