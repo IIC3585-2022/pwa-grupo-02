@@ -1,30 +1,35 @@
-const STATIC_CACHE = 'static-cache-v1';
+importScripts('/assets/js/idb.js');
+importScripts('/assets/js/utils.js');
+
+const STATIC_CACHE = 'static-cache-v11';
+const STATIC_FILES = [
+  '/',
+  '/index.html',
+  '/favicon.svg',
+  '/assets/css/main.css',
+  '/assets/js/main.js',
+  '/assets/js/idb.js',
+  '/assets/js/utils.js',
+  '/assets/js/dom.js',
+  'https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css'
+];
+const DYNAMIC_CACHE = 'dynamic-cache-v1';
 
 self.addEventListener('install', function(event) {
-  console.log('[Service Worker] Installing Service Worker ...', event);
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(function(cache) {
-        console.log('[Service Worker] Precaching App Shell');
-        cache.addAll([
-          '/',
-          '/index.html',
-          '/favicon.svg',
-          '/assets/css/style.css',
-          '/assets/scripts/main.js',
-        ]);
+        cache.addAll(STATIC_FILES);
       })
   )
 });
 
 self.addEventListener('activate', function(event) {
-  console.log('[Service Worker] Activating Service Worker ....', event);
   event.waitUntil(
     caches.keys()
       .then(function(keyList) {
         return Promise.all(keyList.map(function(key) {
-          if (key !== STATIC_CACHE) {
-            console.log('[Service Worker] Removing old cache', key);
+          if (key !== STATIC_CACHE && key !== DYNAMIC_CACHE) {
             return caches.delete(key);
           }
         }));
@@ -34,9 +39,37 @@ self.addEventListener('activate', function(event) {
 });
 
 self.addEventListener('fetch', (event) => {
-  console.log('[Service Worker] Fetching something...', event);
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
-  );
+  const url = 'https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images'
+  if (event.request.url.indexOf(url) > -1) {
+    event.respondWith(fetch(event.request)
+      .then((response) => {
+        const clonedResponse = response.clone()
+        clonedResponse.json()
+          .then((data) => {
+            data.documents.forEach((image) => {
+              writeData('images', image);
+            });
+          })
+        return response;
+      })
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          if (response) {
+            return response
+          } else {
+            return fetch(event.request)
+              .then((response) => {
+                return caches.open(DYNAMIC_CACHE)
+                  .then((cache) =>  {
+                    cache.put(event.request.url, response.clone());
+                    return response;
+                  })
+              });
+          }
+        })
+    );
+  }
 });
