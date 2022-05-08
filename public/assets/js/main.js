@@ -1,8 +1,8 @@
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/serviceWorker.js');
-}
-
 window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/serviceWorker.js');
+  }
+
   fetch('https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images')
     .then((response) => response.json())
     .then(({ documents }) => {
