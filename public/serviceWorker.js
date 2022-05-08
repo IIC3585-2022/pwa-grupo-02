@@ -1,7 +1,7 @@
 importScripts('/assets/js/idb.js');
 importScripts('/assets/js/utils.js');
 
-const STATIC_CACHE = 'static-cache-v11';
+const STATIC_CACHE = 'static-cache-v1';
 const STATIC_FILES = [
   '/',
   '/index.html',
