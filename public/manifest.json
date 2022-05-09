@@ -30,7 +30,8 @@
     {
       "src": "/assets/icons/app-icon-192x192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "maskable"
     },
     {
       "src": "/assets/icons/app-icon-256x256.png",
