@@ -16,7 +16,6 @@ const configurePushSub = async () => {
         userVisibleOnly: true,
         applicationServerKey: convertedVapidPublicKey,
       });
-      const id = new Date().toISOString();
       await fetch('https://igpwa-3d0a9-default-rtdb.firebaseio.com/subscriptions.json', {
         method: 'POST',
         headers: {
