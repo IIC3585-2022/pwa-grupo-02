@@ -11,9 +11,10 @@ const STATIC_FILES = [
   '/assets/js/idb.js',
   '/assets/js/utils.js',
   '/assets/js/dom.js',
+  '/assets/js/notifications.js',
   'https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css'
 ];
-const DYNAMIC_CACHE = 'dynamic-cache-v3';
+const DYNAMIC_CACHE = 'dynamic-cache-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -35,14 +36,17 @@ self.addEventListener('activate', (event) =>  {
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = 'https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images'
+  const url = 'https://igpwa-3d0a9-default-rtdb.firebaseio.com/images.json'
   if (event.request.url.indexOf(url) > -1) {
     event.respondWith((async () => {
       const response = await fetch(event.request);
       const clonedResponse = response.clone();
-      const data = await clonedResponse.json()
-      data.documents.forEach((image) => {
-        writeData('images', image);
+      const data = await clonedResponse.json();
+      Object.keys(data).forEach((key) => {
+        writeData('images', {
+          id: key,
+          url: data[key].url,
+        });
       });
       return response;
     })())
@@ -64,21 +68,23 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-new-image') {
     event.waitUntil((async () => {
       const data = await readAllData('sync-images');
-      const responses = await Promise.all(data.map(({ id, document }) => (
-        fetch(`https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images?documentId=${id}`, {
+      const responses = await Promise.all(data.map(({ url }) => (
+        fetch(`https://igpwa-3d0a9-default-rtdb.firebaseio.com/images.json`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
-          body: JSON.stringify(document),
+          body: JSON.stringify({
+            url,
+          }),
         })
       )));
-      const documents = await Promise.all(responses.map((response) => response.json()));
       const clients = await self.clients.matchAll();
       clients.forEach((client) => {
-        documents.forEach(({ fields: { url: { stringValue } } }) => client.postMessage({
+        data.forEach(({ url }) => client.postMessage({
           type: 'load-image',
-          image: stringValue,
+          image: url,
         }));
       });
       await clearAllData('sync-images');

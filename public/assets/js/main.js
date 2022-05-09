@@ -10,16 +10,16 @@ window.addEventListener('load', async () => {
   }
 
   try {
-    const response = await fetch('https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images');
-    const { documents } = await response.json();
-    documents.forEach(({ fields: { url: { stringValue } } }) => {
-      addImage(stringValue);
+    const response = await fetch('https://igpwa-3d0a9-default-rtdb.firebaseio.com/images.json');
+    const data = await response.json();
+    Object.keys(data).forEach((key) => {
+      addImage(data[key].url);
     });
   } catch (error) {
     if ('indexedDB' in window) {
       const data = await readAllData('images');
-      data.forEach(({ fields: { url: { stringValue } } }) => {
-        addImage(stringValue);
+      data.forEach(({ url }) => {
+        addImage(url);
       });
     }
   }
@@ -31,13 +31,7 @@ window.addEventListener('load', async () => {
     const id = new Date().toISOString();
     const image = {
       id,
-      document: {
-        fields: {
-          url: {
-            stringValue: data.get('url'),
-          },
-        },
-      },
+      url: data.get('url'),
     }
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       const sw = await navigator.serviceWorker.ready
@@ -51,4 +45,8 @@ window.addEventListener('load', async () => {
 
   const syncMessageButton = document.getElementById('sync-message-button');
   syncMessageButton.addEventListener('click', hideSyncMessage);
+
+  if ('Notification' in window) {
+    requestNotificationsPermissions();
+  }
 });
