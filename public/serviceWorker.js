@@ -13,7 +13,7 @@ const STATIC_FILES = [
   '/assets/js/dom.js',
   'https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css'
 ];
-const DYNAMIC_CACHE = 'dynamic-cache-v1';
+const DYNAMIC_CACHE = 'dynamic-cache-v3';
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
@@ -73,3 +73,23 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-new-image') {
+    event.waitUntil(
+      readAllData('sync-images')
+        .then((data) => {
+          Promise.all(data.map(({ id, document }) => {
+            fetch(`https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images?documentId=${id}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(document),
+            })
+            .then(() => clearAllData('sync-images'));
+          }));
+        })
+    );
+  }
+})

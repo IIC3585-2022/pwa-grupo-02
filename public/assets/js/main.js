@@ -20,4 +20,34 @@ window.addEventListener('load', () => {
           });
       }
     });
-})
+
+  const form = document.getElementById('upload-form');
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const id = new Date().toISOString();
+    const image = {
+      id,
+      document: {
+        fields: {
+          url: {
+            stringValue: data.get('url'),
+          },
+        },
+      },
+    }
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      navigator.serviceWorker.ready
+        .then((sw) => {
+          writeData('sync-images', image)
+            .then(() => {
+              return sw.sync.register('sync-new-image');
+            })
+            .then(() => {
+              const urlField = document.getElementById('url');
+              urlField.value = '';
+            });
+        });
+    }
+  });
+});
