@@ -1,7 +1,8 @@
 importScripts('/assets/js/idb.js');
 importScripts('/assets/js/utils.js');
+importScripts('/assets/js/dom.js');
 
-const STATIC_CACHE = 'static-cache-v4';
+const STATIC_CACHE = 'static-cache-v1';
 const STATIC_FILES = [
   '/',
   '/index.html',
@@ -64,7 +65,7 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-new-image') {
     event.waitUntil((async () => {
       const data = await readAllData('sync-images');
-      await Promise.all(data.map(({ id, document }) => {
+      const responses = await Promise.all(data.map(({ id, document }) => (
         fetch(`https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images?documentId=${id}`, {
           method: 'POST',
           headers: {
@@ -72,8 +73,16 @@ self.addEventListener('sync', (event) => {
           },
           body: JSON.stringify(document),
         })
-      }));
-      clearAllData('sync-images');
+      )));
+      const documents = await Promise.all(responses.map((response) => response.json()));
+      const clients = await self.clients.matchAll();
+      clients.forEach((client) => {
+        documents.forEach(({ fields: { url: { stringValue } } }) => client.postMessage({
+          type: 'load-image',
+          image: stringValue,
+        }));
+      });
+      await clearAllData('sync-images');
     })());
   }
 })

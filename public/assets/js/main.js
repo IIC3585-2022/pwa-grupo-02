@@ -1,28 +1,31 @@
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/serviceWorker.js');
-  }
-
-  fetch('https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images')
-    .then((response) => response.json())
-    .then(({ documents }) => {
-      documents.forEach(({ fields: { url: { stringValue } } }) => {
-        addImage(stringValue);
-      });
-    })
-    .catch(() => {
-      if ('indexedDB' in window) {
-        readAllData('images')
-          .then((data) => {
-            data.forEach(({ fields: { url: { stringValue } } }) => {
-              addImage(stringValue);
-            });
-          });
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data.type === 'load-image') {
+        addImage(event.data.image);
+        hideSyncMessage();
       }
     });
+  }
+
+  try {
+    const response = await fetch('https://firestore.googleapis.com/v1/projects/igpwa-3d0a9/databases/(default)/documents/images');
+    const { documents } = await response.json();
+    documents.forEach(({ fields: { url: { stringValue } } }) => {
+      addImage(stringValue);
+    });
+  } catch (error) {
+    if ('indexedDB' in window) {
+      const data = await readAllData('images');
+      data.forEach(({ fields: { url: { stringValue } } }) => {
+        addImage(stringValue);
+      });
+    }
+  }
 
   const form = document.getElementById('upload-form');
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
     const id = new Date().toISOString();
@@ -37,21 +40,15 @@ window.addEventListener('load', () => {
       },
     }
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
-      navigator.serviceWorker.ready
-        .then((sw) => {
-          writeData('sync-images', image)
-            .then(() => {
-              return sw.sync.register('sync-new-image');
-            })
-            .then(() => {
-              const urlField = document.getElementById('url');
-              urlField.value = '';
-              toggleSyncMessage();
-            });
-        });
+      const sw = await navigator.serviceWorker.ready
+      await writeData('sync-images', image);
+      await sw.sync.register('sync-new-image');
+      const urlField = document.getElementById('url');
+      urlField.value = '';
+      showSyncMessage();
     }
   });
 
   const syncMessageButton = document.getElementById('sync-message-button');
-  syncMessageButton.addEventListener('click', toggleSyncMessage);
+  syncMessageButton.addEventListener('click', hideSyncMessage);
 });

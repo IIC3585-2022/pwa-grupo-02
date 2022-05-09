@@ -6,7 +6,12 @@ addImage = (src) => {
   images.appendChild(img);
 }
 
-toggleSyncMessage = () => {
+showSyncMessage = () => {
   const syncMessage = document.getElementById('sync-message');
-  syncMessage.style.display = syncMessage.style.display === 'none' ? 'block' : 'none';
+  syncMessage.style.display = 'block';
+}
+
+hideSyncMessage = () => {
+  const syncMessage = document.getElementById('sync-message');
+  syncMessage.style.display = 'none';
 }
