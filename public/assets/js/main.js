@@ -46,8 +46,12 @@ window.addEventListener('load', () => {
             .then(() => {
               const urlField = document.getElementById('url');
               urlField.value = '';
+              toggleSyncMessage();
             });
         });
     }
   });
+
+  const syncMessageButton = document.getElementById('sync-message-button');
+  syncMessageButton.addEventListener('click', toggleSyncMessage);
 });

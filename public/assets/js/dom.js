@@ -5,3 +5,8 @@ addImage = (src) => {
   img.className = "image is-128x128 m-2";
   images.appendChild(img);
 }
+
+toggleSyncMessage = () => {
+  const syncMessage = document.getElementById('sync-message');
+  syncMessage.style.display = syncMessage.style.display === 'none' ? 'block' : 'none';
+}
