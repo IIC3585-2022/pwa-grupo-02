@@ -68,7 +68,7 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-new-image') {
     event.waitUntil((async () => {
       const data = await readAllData('sync-images');
-      const responses = await Promise.all(data.map(({ url }) => (
+      await Promise.all(data.map(({ url }) => (
         fetch(`https://igpwa-3d0a9-default-rtdb.firebaseio.com/images.json`, {
           method: 'POST',
           headers: {
@@ -88,6 +88,23 @@ self.addEventListener('sync', (event) => {
         }));
       });
       await clearAllData('sync-images');
+      fetch('https://us-central1-igpwa-3d0a9.cloudfunctions.net/notify');
     })());
   }
-})
+});
+
+self.addEventListener('push', (event) => {
+  let data = {title: 'New!', content: 'Something new happened!', openUrl: '/'};
+  if (event.data) {
+    data = JSON.parse(event.data.text());
+  }
+  const options = {
+    body: data.content,
+    data: {
+      url: data.openUrl
+    }
+  };
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
