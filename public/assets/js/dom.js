@@ -1,4 +1,4 @@
-addImage = (src) => {
+const addImage = (src) => {
   const images = document.getElementById('images');
   const img = document.createElement('img');
   img.src = src;
@@ -6,12 +6,12 @@ addImage = (src) => {
   images.appendChild(img);
 }
 
-showSyncMessage = () => {
+const showSyncMessage = () => {
   const syncMessage = document.getElementById('sync-message');
   syncMessage.style.display = 'block';
 }
 
-hideSyncMessage = () => {
+const hideSyncMessage = () => {
   const syncMessage = document.getElementById('sync-message');
   syncMessage.style.display = 'none';
 }
